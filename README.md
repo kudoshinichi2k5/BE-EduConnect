@@ -55,13 +55,12 @@ npm install
 ### B2: Chạy Server
 
 ```
-node server.js
-(Hoặc node index.js tùy tên file chính của bạn)
+node index.js
 ```
 
 ### B3: Kiểm tra hoạt động
 Nếu Terminal hiện thông báo:
 
-Server đang chạy tại http://localhost:3000 Đã kết nối thành công với MySQL
+Server đang chạy tại http://localhost:5000 Đã kết nối thành công với MySQL
 
-Thì hãy mở trình duyệt và vào thử link: http://localhost:3000/api/posts
+Thì hãy mở trình duyệt và vào thử link: http://localhost:5000/api/posts
