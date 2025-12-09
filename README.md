@@ -63,4 +63,4 @@ Nếu Terminal hiện thông báo:
 
 Server đang chạy tại http://localhost:5000 Đã kết nối thành công với MySQL
 
-Thì hãy mở trình duyệt và vào thử link: http://localhost:5000/api/posts
+Thì hãy mở trình duyệt và vào thử link: [http://localhost:5000/api/posts](http://localhost:5000/api-docs)
