@@ -1,21 +1,20 @@
-const router = require('express').Router();
-const userController = require('../controllers/user_controller');
+const router = require('express').Router(); 
+const UserController = require('../controllers/user_controller');
 
 /**
  * @swagger
  * tags:
- *   name: User
- *   description: Các API liên quan tới nguoi dung
+ *   - name: User
+ *     description: API quản lý người dùng
  */
 
 /**
  * @swagger
- * /user/createAccount:
+ * /user/register:
  *   post:
- *     summary: Tạo tài khoản người dùng
- *     description: API dùng để tạo mới một tài khoản người dùng trong hệ thống.
- *     tags:
- *       - User
+ *     summary: Đăng ký tài khoản người dùng
+ *     description: API dùng để tạo mới một tài khoản người dùng.
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -23,18 +22,15 @@ const userController = require('../controllers/user_controller');
  *           schema:
  *             type: object
  *             properties:
- *               TenDangNhap:
+ *               username:
  *                 type: string
  *                 example: "tien.nguyen"
- *               MatKhau:
+ *               password:
  *                 type: string
  *                 example: "123456"
- *               MaNhom:
- *                 type: string
- *                 example: "GR001"
  *     responses:
  *       201:
- *         description: Tạo tài khoản thành công
+ *         description: Đăng ký thành công
  *         content:
  *           application/json:
  *             schema:
@@ -42,9 +38,12 @@ const userController = require('../controllers/user_controller');
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tạo tài khoản người dùng thành công"
+ *                   example: "Đăng ký thành công"
+ *                 id:
+ *                   type: integer
+ *                   example: 12
  *       409:
- *         description: Tên đăng nhập đã tồn tại
+ *         description: Username đã tồn tại
  *         content:
  *           application/json:
  *             schema:
@@ -52,7 +51,7 @@ const userController = require('../controllers/user_controller');
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tên đăng nhập đã tồn tại"
+ *                   example: "Username đã tồn tại"
  *       500:
  *         description: Lỗi hệ thống
  *         content:
@@ -64,16 +63,14 @@ const userController = require('../controllers/user_controller');
  *                   type: string
  *                   example: "Internal Server Error"
  */
-router.post('/createAccount', userController.createAccount);
+router.post('/register', UserController.register);
 
 /**
  * @swagger
  * /user/login:
  *   post:
  *     summary: Đăng nhập hệ thống
- *     description: API dùng để đăng nhập bằng tên đăng nhập và mật khẩu. Trả về thông tin nhóm người dùng nếu thành công.
- *     tags:
- *       - User
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -81,31 +78,122 @@ router.post('/createAccount', userController.createAccount);
  *           schema:
  *             type: object
  *             properties:
- *               TenDangNhap:
+ *               username:
  *                 type: string
  *                 example: "tien.nguyen"
- *               MatKhau:
+ *               password:
  *                 type: string
  *                 example: "123456"
  *     responses:
  *       200:
- *         description: Đăng nhập thành công - trả về thông tin tài khoản và nhóm
+ *         description: Đăng nhập thành công
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 TenDangNhap:
+ *                 id:
+ *                   type: integer
+ *                   example: 12
+ *                 username:
  *                   type: string
  *                   example: "tien.nguyen"
- *                 MaNhom:
+ *                 role:
  *                   type: string
- *                   example: "GR001"
- *                 TenNhom:
+ *                   example: "student"
+ *       401:
+ *         description: Sai username hoặc password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
  *                   type: string
- *                   example: "Nhóm Quản trị"
+ *                   example: "Sai username hoặc password"
+ *       500:
+ *         description: Lỗi hệ thống
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
+router.post('/login', UserController.login);
+
+/**
+ * @swagger
+ * /user:
+ *   get:
+ *     summary: Lấy danh sách người dùng
+ *     tags: [User]
+ *     responses:
+ *       200:
+ *         description: Danh sách người dùng
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   username:
+ *                     type: string
+ *                     example: "admin"
+ *                   role:
+ *                     type: string
+ *                     example: "admin"
+ *       500:
+ *         description: Lỗi hệ thống
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
+router.get('/', UserController.getAll);
+
+/**
+ * @swagger
+ * /user/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết người dùng
+ *     tags: [User]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 10
+ *                 username:
+ *                   type: string
+ *                   example: "student01"
+ *                 role:
+ *                   type: string
+ *                   example: "student"
  *       404:
- *         description: Tài khoản đăng nhập không đúng
+ *         description: User không tồn tại
  *         content:
  *           application/json:
  *             schema:
@@ -113,7 +201,7 @@ router.post('/createAccount', userController.createAccount);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tài khoản đăng nhập không đúng"
+ *                   example: "User không tồn tại"
  *       500:
  *         description: Lỗi hệ thống
  *         content:
@@ -125,23 +213,20 @@ router.post('/createAccount', userController.createAccount);
  *                   type: string
  *                   example: "Internal Server Error"
  */
-router.post('/login', userController.login);
+router.get('/:id', UserController.getUser);
 
 /**
  * @swagger
- * /user/updatePassword/{TenDangNhap}:
+ * /user/{id}:
  *   put:
- *     summary: Đổi mật khẩu người dùng
- *     description: API dùng để đổi mật khẩu của người dùng dựa trên tên đăng nhập.
- *     tags:
- *       - User
+ *     summary: Cập nhật thông tin người dùng
+ *     tags: [User]
  *     parameters:
- *       - in: path
- *         name: TenDangNhap
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
- *           type: string
- *         description: Tên đăng nhập của người dùng cần đổi mật khẩu
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -149,12 +234,15 @@ router.post('/login', userController.login);
  *           schema:
  *             type: object
  *             properties:
- *               MatKhauMoi:
+ *               username:
  *                 type: string
- *                 example: "newpassword123"
+ *                 example: "newName"
+ *               role:
+ *                 type: string
+ *                 example: "admin"
  *     responses:
  *       200:
- *         description: Đổi mật khẩu thành công
+ *         description: Cập nhật thành công
  *         content:
  *           application/json:
  *             schema:
@@ -164,7 +252,7 @@ router.post('/login', userController.login);
  *                   type: string
  *                   example: "Cập nhật thành công"
  *       400:
- *         description: Tài khoản không tồn tại hoặc dữ liệu không hợp lệ
+ *         description: Cập nhật thất bại
  *         content:
  *           application/json:
  *             schema:
@@ -172,7 +260,7 @@ router.post('/login', userController.login);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tài khoản không tồn tại"
+ *                   example: "Cập nhật thất bại"
  *       500:
  *         description: Lỗi hệ thống
  *         content:
@@ -184,82 +272,20 @@ router.post('/login', userController.login);
  *                   type: string
  *                   example: "Internal Server Error"
  */
-router.put('/updatePassword/:TenDangNhap', userController.updatePassword);
+router.put('/:id', UserController.updateUser);
 
 /**
  * @swagger
- * /user/updateGroup/{TenDangNhap}:
- *   put:
- *     summary: Đổi nhóm người dùng
- *     description: API dùng để đổi nhóm của người dùng dựa trên tên đăng nhập.
- *     tags:
- *       - User
- *     parameters:
- *       - in: path
- *         name: TenDangNhap
- *         required: true
- *         schema:
- *           type: string
- *         description: Tên đăng nhập của người dùng cần đổi nhóm
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               MaNhomMoi:
- *                 type: string
- *                 example: "GR002"
- *     responses:
- *       200:
- *         description: Đổi nhóm thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Cập nhật thành công"
- *       400:
- *         description: Tài khoản không tồn tại hoặc dữ liệu không hợp lệ
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tài khoản không tồn tại"
- *       500:
- *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
- */
-router.put('/updateGroup/:TenDangNhap', userController.updateGroup);
-
-/**
- * @swagger
- * /user/deleteUser/{TenDangNhap}:
+ * /user/{id}:
  *   delete:
  *     summary: Xóa người dùng
- *     description: API dùng để xóa tài khoản dựa trên tên đăng nhập.
- *     tags:
- *       - User
+ *     tags: [User]
  *     parameters:
- *       - in: path
- *         name: TenDangNhap
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
- *           type: string
- *         description: Tên đăng nhập của người dùng cần xóa
+ *           type: integer
  *     responses:
  *       200:
  *         description: Xóa thành công
@@ -268,11 +294,11 @@ router.put('/updateGroup/:TenDangNhap', userController.updateGroup);
  *             schema:
  *               type: object
  *               properties:
- *                 success:
+ *                 message:
  *                   type: string
  *                   example: "Xóa thành công"
  *       400:
- *         description: Xóa không thành công hoặc tài khoản không tồn tại
+ *         description: Không thể xóa
  *         content:
  *           application/json:
  *             schema:
@@ -292,6 +318,100 @@ router.put('/updateGroup/:TenDangNhap', userController.updateGroup);
  *                   type: string
  *                   example: "Internal Server Error"
  */
-router.delete('/deleteUser/:TenDangNhap', userController.deleteUser);
+router.delete('/:id', UserController.deleteUser);
+
+/**
+ * @swagger
+ * /user/{id}/avatar:
+ *   patch:
+ *     summary: Cập nhật avatar người dùng
+ *     tags: [User]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 example: "https://domain.com/avatar.jpg"
+ *     responses:
+ *       200:
+ *         description: Cập nhật avatar thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Cập nhật avatar thành công"
+ *       400:
+ *         description: Cập nhật avatar thất bại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Cập nhật avatar thất bại"
+ *       500:
+ *         description: Lỗi hệ thống
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
+router.patch('/:id/avatar', UserController.updateAvatar);
+
+/**
+ * @swagger
+ * /user/role/student:
+ *   get:
+ *     summary: Lấy danh sách học sinh
+ *     tags: [User]
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+router.get('/role/student', UserController.getStudents);
+
+/**
+ * @swagger
+ * /user/role/admin:
+ *   get:
+ *     summary: Lấy danh sách admin
+ *     tags: [User]
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+router.get('/role/admin', UserController.getAdmins);
 
 module.exports = router;
