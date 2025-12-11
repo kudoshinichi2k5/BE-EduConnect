@@ -50,6 +50,8 @@ dlldata.c
 backend/node_modules
 *node_modules/*
 */node_modules/
+config/serviceAccountKey.json
+
 # .NET Core
 project.lock.json
 project.fragment.lock.json
