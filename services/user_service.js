@@ -2,116 +2,166 @@ const db = require('../config/database');
 
 class UserService {
 
-    // Đăng ký
-    static async register(data) {
-        try {
-            const { username } = data;
+  static async register(data) {
+    try {
+      const { uid, email = '', username = '', role = 'student', school = null, avatar = null } = data;
 
-            const [exists] = await db.query(
-                "SELECT id FROM USERS WHERE username = ?",
-                [username]
-            );
-            if (exists.length > 0) return { exists: true };
+      // Check UID
+      const [existsByUid] = await db.query(
+        'SELECT MaNguoiDung FROM USER WHERE MaNguoiDung = ?',
+        [uid]
+      );
+      if (existsByUid.length > 0) return { exists: true, by: 'uid' };
 
-            const [result] = await db.query(
-                "INSERT INTO USERS SET ?",
-                [data]
-            );
+      // Check Email
+      if (email) {
+        const [existsByEmail] = await db.query(
+          'SELECT Email FROM USER WHERE Email = ?',
+          [email]
+        );
+        if (existsByEmail.length > 0) return { exists: true, by: 'email' };
+      }
 
-            return { id: result.insertId };
-        } catch (error) {
-            console.log("UserService register error:", error);
-            return null;
-        }
+      // Insert
+      const sql = `
+        INSERT INTO USER (MaNguoiDung, Email, Password, HoTen, Role, School, Avatar)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      await db.query(sql, [uid, email, '', username, role, school, avatar]);
+
+      return { uid, email, username, role };
+    } catch (err) {
+      console.error("UserService.register:", err);
+      return null;
     }
+  }
 
-    // Login
-    static async login(username, password) {
-        try {
-            const [rows] = await db.query(
-                "SELECT * FROM USERS WHERE username = ? AND password = ?",
-                [username, password]
-            );
-            return rows.length ? rows[0] : null;
-        } catch (error) {
-            console.log("UserService login error:", error);
-        }
+  static async login(email, password) {
+    try {
+      const [rows] = await db.query(
+        `SELECT MaNguoiDung AS uid, Email, HoTen AS username, Role, Avatar 
+         FROM USER 
+         WHERE Email = ? AND Password = ?`,
+        [email, password]
+      );
+      return rows.length ? rows[0] : null;
+    } catch (err) {
+      console.error("UserService.login:", err);
+      return null;
     }
+  }
 
-    // Lấy danh sách user
-    static async getAll() {
-        try {
-            const [rows] = await db.query("SELECT * FROM USERS");
-            return rows;
-        } catch (error) {
-            console.log("UserService getAll error:", error);
-        }
+  static async getAll() {
+    try {
+      const [rows] = await db.query(
+        `SELECT MaNguoiDung AS uid, Email, HoTen AS username, Role, School, Avatar 
+         FROM USER`
+      );
+      return rows;
+    } catch (err) {
+      console.error("UserService.getAll:", err);
+      return null;
     }
+  }
 
-    // Lấy chi tiết user
-    static async getUser(id) {
-        try {
-            const [rows] = await db.query(
-                "SELECT * FROM USERS WHERE id = ?",
-                [id]
-            );
-            return rows.length ? rows[0] : null;
-        } catch (error) {
-            console.log("UserService getUser error:", error);
-        }
+  static async getUser(uid) {
+    try {
+      const [rows] = await db.query(
+        `SELECT MaNguoiDung AS uid, Email, HoTen AS username, Role, School, Avatar 
+         FROM USER 
+         WHERE MaNguoiDung = ?`,
+        [uid]
+      );
+      return rows.length ? rows[0] : null;
+    } catch (err) {
+      console.error("UserService.getUser:", err);
+      return null;
     }
+  }
 
-    // Cập nhật thông tin user
-    static async updateUser(id, data) {
-        try {
-            const [rows] = await db.query(
-                "UPDATE USERS SET ? WHERE id = ?",
-                [data, id]
-            );
-            return rows.affectedRows > 0;
-        } catch (error) {
-            console.log("UserService updateUser error:", error);
-        }
-    }
+  static async updateUser(uid, updateData) {
+    try {
+      const sets = [];
+      const params = [];
 
-    // Xóa user
-    static async deleteUser(id) {
-        try {
-            const [rows] = await db.query(
-                "DELETE FROM USERS WHERE id = ?",
-                [id]
-            );
-            return rows.affectedRows > 0;
-        } catch (error) {
-            console.log("UserService deleteUser error:", error);
-        }
-    }
+      if (updateData.username) {
+        sets.push("HoTen = ?");
+        params.push(updateData.username);
+      }
 
-    // Cập nhật avatar
-    static async updateAvatar(id, avatarUrl) {
-        try {
-            const [rows] = await db.query(
-                "UPDATE USERS SET avatar = ? WHERE id = ?",
-                [avatarUrl, id]
-            );
-            return rows.affectedRows > 0;
-        } catch (error) {
-            console.log("UserService updateAvatar error:", error);
-        }
-    }
+      if (updateData.role) {
+        sets.push("Role = ?");
+        params.push(updateData.role);
+      }
 
-    // Lấy danh sách theo role
-    static async getByRole(role) {
-        try {
-            const [rows] = await db.query(
-                "SELECT * FROM USERS WHERE role = ?",
-                [role]
-            );
-            return rows;
-        } catch (error) {
-            console.log("UserService getByRole error:", error);
-        }
+      if (updateData.school !== undefined) {
+        sets.push("School = ?");
+        params.push(updateData.school);
+      }
+
+      if (updateData.email) {
+        sets.push("Email = ?");
+        params.push(updateData.email);
+      }
+
+      if (updateData.avatar) {
+        sets.push("Avatar = ?");
+        params.push(updateData.avatar);
+      }
+
+      if (sets.length === 0) return false;
+
+      const sql = `UPDATE USER SET ${sets.join(", ")} WHERE MaNguoiDung = ?`;
+      params.push(uid);
+
+      const [result] = await db.query(sql, params);
+      return result.affectedRows > 0;
+    } catch (err) {
+      console.error("UserService.updateUser:", err);
+      return null;
     }
+  }
+
+  static async deleteUser(uid) {
+    try {
+      const [rs] = await db.query(
+        "DELETE FROM USER WHERE MaNguoiDung = ?",
+        [uid]
+      );
+      return rs.affectedRows > 0;
+    } catch (err) {
+      console.error("UserService.deleteUser:", err);
+      return null;
+    }
+  }
+
+  static async updateAvatar(uid, avatarUrl) {
+    try {
+      const [rs] = await db.query(
+        "UPDATE USER SET Avatar = ? WHERE MaNguoiDung = ?",
+        [avatarUrl, uid]
+      );
+      return rs.affectedRows > 0;
+    } catch (err) {
+      console.error("UserService.updateAvatar:", err);
+      return null;
+    }
+  }
+
+  static async getByRole(role) {
+    try {
+      const [rows] = await db.query(
+        `SELECT MaNguoiDung AS uid, Email, HoTen AS username, Role, Avatar 
+         FROM USER 
+         WHERE Role = ?`,
+        [role]
+      );
+      return rows;
+    } catch (err) {
+      console.error("UserService.getByRole:", err);
+      return null;
+    }
+  }
 }
 
 module.exports = UserService;

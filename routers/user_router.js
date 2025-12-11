@@ -1,5 +1,6 @@
-const router = require('express').Router(); 
-const UserController = require('../controllers/user_controller');
+const router = require('express').Router();
+const userController = require('../controllers/user_controller');
+const firebaseAuth = require('../middlewares/firebase_auth');
 
 /**
  * @swagger
@@ -12,9 +13,10 @@ const UserController = require('../controllers/user_controller');
  * @swagger
  * /user/register:
  *   post:
- *     summary: Đăng ký tài khoản người dùng
- *     description: API dùng để tạo mới một tài khoản người dùng.
- *     tags: [User]
+ *     summary: Đăng ký tài khoản người dùng (Firebase + MySQL)
+ *     description: Client tạo tài khoản trên Firebase → gửi uid + email + thông tin profile để lưu vào MySQL.
+ *     tags:
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -22,55 +24,41 @@ const UserController = require('../controllers/user_controller');
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               uid:
  *                 type: string
- *                 example: "tien.nguyen"
- *               password:
+ *                 example: "FIREBASE_UID_ABC"
+ *               email:
  *                 type: string
- *                 example: "123456"
+ *                 example: "test@gmail.com"
+ *               hoTen:
+ *                 type: string
+ *                 example: "Kiên Lê Trung"
+ *               school:
+ *                 type: string
+ *                 example: "UIT"
+ *               role:
+ *                 type: string
+ *                 example: "student"
  *     responses:
  *       201:
  *         description: Đăng ký thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Đăng ký thành công"
- *                 id:
- *                   type: integer
- *                   example: 12
+ *       400:
+ *         description: Thiếu dữ liệu gửi lên
  *       409:
- *         description: Username đã tồn tại
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Username đã tồn tại"
+ *         description: Người dùng đã tồn tại
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.post('/register', UserController.register);
+router.post('/register', userController.register);
 
 /**
  * @swagger
  * /user/login:
  *   post:
- *     summary: Đăng nhập hệ thống
- *     tags: [User]
+ *     summary: Xác thực người dùng bằng Firebase token
+ *     description: Client gửi Firebase ID Token → Server decode → trả về thông tin user trong MySQL.
+ *     tags:
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -78,155 +66,73 @@ router.post('/register', UserController.register);
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               token:
  *                 type: string
- *                 example: "tien.nguyen"
- *               password:
- *                 type: string
- *                 example: "123456"
+ *                 example: "FIREBASE_ID_TOKEN_ABC"
  *     responses:
  *       200:
  *         description: Đăng nhập thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 12
- *                 username:
- *                   type: string
- *                   example: "tien.nguyen"
- *                 role:
- *                   type: string
- *                   example: "student"
  *       401:
- *         description: Sai username hoặc password
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Sai username hoặc password"
+ *         description: Token không hợp lệ
+ *       404:
+ *         description: User chưa tạo profile trong MySQL
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.post('/login', UserController.login);
+router.post('/login', userController.login);
 
 /**
  * @swagger
  * /user:
  *   get:
  *     summary: Lấy danh sách người dùng
- *     tags: [User]
+ *     tags:
+ *       - User
  *     responses:
  *       200:
  *         description: Danh sách người dùng
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     example: 1
- *                   username:
- *                     type: string
- *                     example: "admin"
- *                   role:
- *                     type: string
- *                     example: "admin"
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.get('/', UserController.getAll);
+router.get('/', userController.getAll);
 
 /**
  * @swagger
  * /user/{id}:
  *   get:
- *     summary: Lấy thông tin chi tiết người dùng
- *     tags: [User]
+ *     summary: Lấy thông tin người dùng theo UID
+ *     tags:
+ *       - User
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *           example: 10
+ *           type: string
+ *           example: "FIREBASE_UID_ABC"
  *     responses:
  *       200:
  *         description: Lấy thông tin thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 10
- *                 username:
- *                   type: string
- *                   example: "student01"
- *                 role:
- *                   type: string
- *                   example: "student"
  *       404:
- *         description: User không tồn tại
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "User không tồn tại"
+ *         description: Không tìm thấy user
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.get('/:id', UserController.getUser);
+router.get('/:id', userController.getUser);
 
 /**
  * @swagger
  * /user/{id}:
  *   put:
  *     summary: Cập nhật thông tin người dùng
- *     tags: [User]
+ *     tags:
+ *       - User
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -234,103 +140,61 @@ router.get('/:id', UserController.getUser);
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               hoTen:
  *                 type: string
- *                 example: "newName"
+ *                 example: "Nguyễn Văn A"
+ *               school:
+ *                 type: string
+ *                 example: "HCMUTE"
  *               role:
  *                 type: string
- *                 example: "admin"
+ *                 example: "student"
  *     responses:
  *       200:
  *         description: Cập nhật thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Cập nhật thành công"
  *       400:
- *         description: Cập nhật thất bại
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Cập nhật thất bại"
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.put('/:id', UserController.updateUser);
+router.put('/:id', userController.updateUser);
 
 /**
  * @swagger
  * /user/{id}:
  *   delete:
- *     summary: Xóa người dùng
- *     tags: [User]
+ *     summary: Xóa người dùng (MySQL + Firebase)
+ *     tags:
+ *       - User
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
+ *           example: "FIREBASE_UID_ABC"
  *     responses:
  *       200:
  *         description: Xóa thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Xóa thành công"
- *       400:
- *         description: Không thể xóa
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Xóa không thành công"
+ *       404:
+ *         description: Không tìm thấy user
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.delete('/:id', UserController.deleteUser);
+router.delete('/:id', userController.deleteUser);
 
 /**
  * @swagger
  * /user/{id}/avatar:
  *   patch:
  *     summary: Cập nhật avatar người dùng
- *     tags: [User]
+ *     tags:
+ *       - User
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
  *     requestBody:
  *       required: true
@@ -341,77 +205,45 @@ router.delete('/:id', UserController.deleteUser);
  *             properties:
  *               avatar:
  *                 type: string
- *                 example: "https://domain.com/avatar.jpg"
+ *                 example: "https://firebasestorage.googleapis.com/..."
  *     responses:
  *       200:
  *         description: Cập nhật avatar thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Cập nhật avatar thành công"
  *       400:
- *         description: Cập nhật avatar thất bại
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Cập nhật avatar thất bại"
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi hệ thống
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal Server Error"
  */
-router.patch('/:id/avatar', UserController.updateAvatar);
+router.patch('/:id/avatar', userController.updateAvatar);
 
 /**
  * @swagger
  * /user/role/student:
  *   get:
  *     summary: Lấy danh sách học sinh
- *     tags: [User]
+ *     tags:
+ *       - User
  *     responses:
  *       200:
  *         description: Thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
  *       500:
  *         description: Lỗi hệ thống
  */
-router.get('/role/student', UserController.getStudents);
+router.get('/role/student', userController.getStudents);
 
 /**
  * @swagger
  * /user/role/admin:
  *   get:
  *     summary: Lấy danh sách admin
- *     tags: [User]
+ *     tags:
+ *       - User
  *     responses:
  *       200:
  *         description: Thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: array
  *       500:
  *         description: Lỗi hệ thống
  */
-router.get('/role/admin', UserController.getAdmins);
+router.get('/role/admin', userController.getAdmins);
 
 module.exports = router;
