@@ -4,7 +4,6 @@ USE EDU_CONNECT_DB;
 CREATE TABLE USER (
     MaNguoiDung VARCHAR(50) PRIMARY KEY,
     Email VARCHAR(100) NOT NULL UNIQUE,
-    Password VARCHAR(255) NOT NULL,
     HoTen VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     Role ENUM('admin', 'student') DEFAULT 'student',
     School VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -43,7 +42,7 @@ CREATE TABLE ARTICLE (
 );
 
 CREATE TABLE BOOKMARK (
-    MaNguoiDung VARCHAR(5) NOT NULL,
+    MaNguoiDung VARCHAR(50) NOT NULL,
     MaTinTuc VARCHAR(5) NOT NULL,
     Saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (MaNguoiDung, MaTinTuc), 
