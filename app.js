@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require('express');
 const body_parser = require("body-parser");
+const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swagger');
 
@@ -12,6 +13,7 @@ const userRouter = require('./routers/user_router');
 // const chatbotRouter = require('./routers/chatbot_router');
 
 const app = express();
+const cors = require('cors');
 app.use(body_parser.json());
 
 // Url api để mở UI Swagger (thấy được mô tả các API)
