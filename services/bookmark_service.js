@@ -5,12 +5,21 @@ class BookmarkService {
     // ===== Thêm bookmark =====
     static async addBookmark(MaNguoiDung, MaTinTuc) {
         try {
+            // Check USER
+            const userExists = await this.existedUser(MaNguoiDung);
+            if (!userExists) return { userNotFound: true };
+
+            // Check OPPORTUNITY
+            const oppExists = await this.existedOpportunity(MaTinTuc);
+            if (!oppExists) return { oppNotFound: true };
+
             const sql = `
                 INSERT INTO BOOKMARK (MaNguoiDung, MaTinTuc)
                 VALUES (?, ?)
             `;
             await db.query(sql, [MaNguoiDung, MaTinTuc]);
             return true;
+            
         } catch (error) {
             // Duplicate PK (đã bookmark)
             if (error.code === 'ER_DUP_ENTRY') {

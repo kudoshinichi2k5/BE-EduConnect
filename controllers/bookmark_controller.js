@@ -17,6 +17,18 @@ exports.addBookmark = async (req, res) => {
             return res.status(500).json({ error: "Internal Server Error" });
         }
 
+        if (result.userNotFound) {
+            return res.status(404).json({
+                message: "User chưa tồn tại trong hệ thống"
+            });
+        }
+
+        if (result.oppNotFound) {
+            return res.status(404).json({
+                message: "Opportunity không tồn tại"
+            });
+        }
+
         if (result.exists) {
             return res.status(409).json({
                 message: "Opportunity đã được bookmark"
