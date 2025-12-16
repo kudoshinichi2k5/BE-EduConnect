@@ -8,7 +8,7 @@ const swaggerSpec = require('./docs/swagger');
 const userRouter = require('./routers/user_router');
 // const mentorRouter = require('./routers/mentor_router');
 const opportunityRouter = require('./routers/opportunity_router');
-// const articleRouter = require('./routers/article_router');
+const articleRouter = require('./routers/article_router');
 // const bookmarkRouter = require('./routers/bookmark_router');
 // const chatbotRouter = require('./routers/chatbot_router');
 
@@ -23,7 +23,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/user', userRouter);
 // app.use('/api/mentor', mentorRouter);
 app.use('/api/opportunity', opportunityRouter);
-// app.use('/api/article', articleRouter);
+app.use('/api/article', articleRouter);
 // app.use('/api/bookmark', bookmarkRouter);
 // app.use('/api/chatbot', chatbotRouter);
 
