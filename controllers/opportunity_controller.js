@@ -1,57 +1,62 @@
-const OpportunityService = require('../services/opportunity_service');
+const OpportunityService = require("../services/opportunity_service");
 
-// ===== CREATE 1 =====
-exports.create = async (req, res) => {
-  const result = await OpportunityService.create(req.body);
-  if (!result) return res.status(500).json({ message: "Tạo thất bại" });
-  return res.status(201).json({ message: "Tạo opportunity thành công" });
+// ========== CREATE ONE ==========
+exports.createOpportunity = async (req, res) => {
+    try {
+        const result = await OpportunityService.createOpportunity(req.body);
+        if (!result) {
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
+        res.status(201).json(result);
+    } catch (error) {
+        console.error("createOpportunity Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 };
 
-// ===== BULK CREATE =====
-exports.bulkCreate = async (req, res) => {
-  const list = req.body;
-  if (!Array.isArray(list) || list.length === 0) {
-    return res.status(400).json({ message: "Danh sách không hợp lệ" });
-  }
-
-  const count = await OpportunityService.bulkCreate(list);
-  if (!count) return res.status(500).json({ message: "Bulk insert thất bại" });
-
-  return res.status(201).json({
-    message: "Thêm dữ liệu hàng loạt thành công",
-    inserted: count
-  });
+// ========== CREATE MANY (ADMIN) ==========
+exports.createManyOpportunities = async (req, res) => {
+    try {
+        const result = await OpportunityService.createManyOpportunities(req.body);
+        if (!result) {
+            return res.status(400).json({ message: "Danh sách không hợp lệ" });
+        }
+        res.status(201).json(result);
+    } catch (error) {
+        console.error("createManyOpportunities Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 };
 
-// ===== GET ALL =====
+// ========== READ ==========
 exports.getAll = async (req, res) => {
-  const rows = await OpportunityService.getAll();
-  return res.json(rows);
+    const rows = await OpportunityService.getAll();
+    res.json(rows);
 };
 
-// ===== GET BY ID =====
 exports.getById = async (req, res) => {
-  const item = await OpportunityService.getById(req.params.id);
-  if (!item) return res.status(404).json({ message: "Không tìm thấy" });
-  return res.json(item);
+    const row = await OpportunityService.getById(req.params.id);
+    if (!row) return res.status(404).json({ message: "Không tìm thấy" });
+    res.json(row);
 };
 
-// ===== UPDATE =====
-exports.update = async (req, res) => {
-  const result = await OpportunityService.update(req.params.id, req.body);
-  if (!result) return res.status(400).json({ message: "Không có thay đổi" });
-  return res.json({ message: "Cập nhật thành công" });
-};
-
-// ===== DELETE =====
-exports.delete = async (req, res) => {
-  const result = await OpportunityService.delete(req.params.id);
-  if (!result) return res.status(404).json({ message: "Không tồn tại" });
-  return res.json({ message: "Xóa thành công" });
-};
-
-// ===== GET BY TYPE =====
 exports.getByType = async (req, res) => {
-  const rows = await OpportunityService.getByType(req.params.type);
-  return res.json(rows);
+    const rows = await OpportunityService.getByType(req.params.type);
+    res.json(rows);
+};
+
+// ========== UPDATE ==========
+exports.updateOpportunity = async (req, res) => {
+    const result = await OpportunityService.updateOpportunity(req.params.id, req.body);
+    if (result === null) return res.status(500).json({ error: "Internal Server Error" });
+    if (!result) return res.status(400).json({ message: "Không có thay đổi" });
+    res.json({ success: "Cập nhật thành công" });
+};
+
+// ========== DELETE ==========
+exports.deleteOpportunity = async (req, res) => {
+    const result = await OpportunityService.deleteOpportunity(req.params.id);
+    if (result === null) return res.status(500).json({ error: "Internal Server Error" });
+    if (!result) return res.status(400).json({ message: "Xóa không thành công" });
+    res.json({ success: "Xóa thành công" });
 };
