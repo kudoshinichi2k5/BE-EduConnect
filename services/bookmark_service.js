@@ -75,6 +75,22 @@ class BookmarkService {
             return null;
         }
     }
+
+    static async existedUser(uid) {
+        const [rows] = await db.query(
+            "SELECT MaNguoiDung FROM USER WHERE MaNguoiDung = ?",
+            [uid]
+        );
+        return rows.length > 0;
+    }
+
+    static async existedOpportunity(MaTinTuc) {
+        const [rows] = await db.query(
+            "SELECT MaTinTuc FROM OPPORTUNITY WHERE MaTinTuc = ?",
+            [MaTinTuc]
+        );
+        return rows.length > 0;
+    }
 }
 
 module.exports = BookmarkService;
