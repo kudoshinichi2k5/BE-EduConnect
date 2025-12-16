@@ -2,9 +2,7 @@ const db = require("../config/database");
 
 class OpportunityService {
 
-    // ================== CREATE ==================
-
-    // Tạo 1 opportunity
+    // ===== TẠO 1 OPPORTUNITY =====
     static async createOpportunity(data) {
         try {
             const {
@@ -16,11 +14,16 @@ class OpportunityService {
                 Deadline
             } = data;
 
+            // Lấy MaTinTuc cuối
             const [rows] = await db.query(
                 "SELECT MaTinTuc FROM OPPORTUNITY ORDER BY MaTinTuc DESC LIMIT 1"
             );
 
-            let lastId = rows.length > 0 ? rows[0].MaTinTuc : "";
+            let lastId = "";
+            if (rows.length > 0) {
+                lastId = rows[0].MaTinTuc;
+            }
+
             const nextId = this.createId(lastId);
 
             const record = {
@@ -45,44 +48,43 @@ class OpportunityService {
         }
     }
 
-    // Tạo nhiều opportunity (ADMIN – BULK INSERT)
-    static async createManyOpportunities(list) {
+    // ===== TẠO NHIỀU OPPORTUNITY (BULK INSERT) =====
+    static async createMany(opportunities) {
         try {
-            if (!Array.isArray(list) || list.length === 0) return null;
-
             const [rows] = await db.query(
                 "SELECT MaTinTuc FROM OPPORTUNITY ORDER BY MaTinTuc DESC LIMIT 1"
             );
 
             let lastId = rows.length > 0 ? rows[0].MaTinTuc : "";
 
-            const records = list.map(item => {
+            const records = opportunities.map(item => {
                 lastId = this.createId(lastId);
-                return {
-                    MaTinTuc: lastId,
-                    Title: item.Title,
-                    Description: item.Description,
-                    Content_url: item.Content_url,
-                    Image_url: item.Image_url,
-                    Type: item.Type,
-                    Deadline: item.Deadline
-                };
+                return [
+                    lastId,
+                    item.Title,
+                    item.Description,
+                    item.Content_url,
+                    item.Image_url,
+                    item.Type,
+                    item.Deadline
+                ];
             });
 
             await db.query(
-                "INSERT INTO OPPORTUNITY (MaTinTuc, Title, Description, Content_url, Image_url, Type, Deadline) VALUES ?",
-                [records.map(r => Object.values(r))]
+                `INSERT INTO OPPORTUNITY 
+                (MaTinTuc, Title, Description, Content_url, Image_url, Type, Deadline)
+                VALUES ?`,
+                [records]
             );
 
-            return records;
+            return true;
         } catch (error) {
-            console.log("OpportunityService createManyOpportunities Error:", error);
+            console.log("OpportunityService createMany Error:", error);
             return null;
         }
     }
 
-    // ================== READ ==================
-
+    // ===== LẤY TẤT CẢ =====
     static async getAll() {
         try {
             const [rows] = await db.query(
@@ -91,10 +93,10 @@ class OpportunityService {
             return rows;
         } catch (error) {
             console.log("OpportunityService getAll Error:", error);
-            return null;
         }
     }
 
+    // ===== LẤY THEO ID =====
     static async getById(MaTinTuc) {
         try {
             const [rows] = await db.query(
@@ -104,10 +106,10 @@ class OpportunityService {
             return rows[0] || null;
         } catch (error) {
             console.log("OpportunityService getById Error:", error);
-            return null;
         }
     }
 
+    // ===== LỌC THEO TYPE =====
     static async getByType(type) {
         try {
             const [rows] = await db.query(
@@ -117,13 +119,11 @@ class OpportunityService {
             return rows;
         } catch (error) {
             console.log("OpportunityService getByType Error:", error);
-            return null;
         }
     }
 
-    // ================== UPDATE ==================
-
-    static async updateOpportunity(MaTinTuc, updateData) {
+    // ===== UPDATE =====
+    static async updateOpportunity(MaTinTuc, data) {
         try {
             const {
                 Title,
@@ -132,7 +132,7 @@ class OpportunityService {
                 Image_url,
                 Type,
                 Deadline
-            } = updateData;
+            } = data;
 
             const [result] = await db.query(
                 `UPDATE OPPORTUNITY 
@@ -141,30 +141,29 @@ class OpportunityService {
                 [Title, Description, Content_url, Image_url, Type, Deadline, MaTinTuc]
             );
 
-            return result.affectedRows > 0;
+            if (result.affectedRows === 0) return false;
+            return true;
         } catch (error) {
             console.log("OpportunityService updateOpportunity Error:", error);
             return null;
         }
     }
 
-    // ================== DELETE ==================
-
+    // ===== DELETE =====
     static async deleteOpportunity(MaTinTuc) {
         try {
             const [result] = await db.query(
                 "DELETE FROM OPPORTUNITY WHERE MaTinTuc = ?",
                 [MaTinTuc]
             );
-            return result.affectedRows > 0;
+            if (result.affectedRows === 0) return false;
+            return true;
         } catch (error) {
             console.log("OpportunityService deleteOpportunity Error:", error);
-            return null;
         }
     }
 
-    // ================== UTIL ==================
-
+    // ===== TẠO ID =====
     static createId(lastId) {
         if (!lastId) return "OP001";
         const num = parseInt(lastId.slice(2)) + 1;
