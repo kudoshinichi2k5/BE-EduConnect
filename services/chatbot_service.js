@@ -1,5 +1,5 @@
+const { OpenRouter } = require("@openrouter/sdk");
 require("dotenv").config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class ChatbotService {
 
@@ -9,37 +9,36 @@ class ChatbotService {
                 return null;
             }
 
-            // 1️⃣ Khởi tạo Gemini
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-            const model = genAI.getGenerativeModel({
-                model: "gemini-pro"
+            const openrouter = new OpenRouter({
+                apiKey: process.env.OPENROUTER_API_KEY
             });
 
-            // 2️⃣ Prompt hệ thống (RẤT QUAN TRỌNG)
-            const prompt = `
-Bạn là một gia sư AI trong ứng dụng EduConnect dành cho học sinh và sinh viên Việt Nam.
+            const completion = await openrouter.chat.send({
+                model: "allenai/olmo-3.1-32b-think:free",
+                messages: [
+                    {
+                        role: "system",
+                        content: `
+Bạn là một chatbot gia sư AI trong ứng dụng EduConnect dành cho học sinh, sinh viên Việt Nam.
 
-Nhiệm vụ của bạn:
+Yêu cầu:
 - Trả lời bằng tiếng Việt
-- Giải thích dễ hiểu, ngắn gọn
-- Định hướng học tập và nghề nghiệp
-- Không trả lời nội dung phản cảm, chính trị, bạo lực
+- Giải thích dễ hiểu
+- Tập trung giáo dục, học tập, định hướng nghề nghiệp
+- Không trả lời nội dung nhạy cảm
+                        `
+                    },
+                    {
+                        role: "user",
+                        content: question
+                    }
+                ]
+            });
 
-Nếu câu hỏi không liên quan đến giáo dục:
-→ Hãy lịch sự từ chối và gợi ý chủ đề học tập.
+            const answer =
+                completion?.choices?.[0]?.message?.content || null;
 
-Câu hỏi của người dùng:
-${question}
-            `;
-
-            // 3️⃣ Gửi câu hỏi cho Gemini
-            const result = await model.generateContent(prompt);
-
-            // 4️⃣ Lấy text trả về
-            const response = result.response.text();
-
-            return response;
+            return answer;
 
         } catch (error) {
             console.error("ChatbotService askQuestion Error:", error);

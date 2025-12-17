@@ -5,22 +5,17 @@ const chatbotController = require("../controllers/chatbot_controller");
  * @swagger
  * tags:
  *   - name: Chatbot
- *     description: API Chatbot Gia sư AI (Gemini)
+ *     description: API Chatbot tư vấn học tập & nghề nghiệp
  */
 
 /**
  * @swagger
  * /chatbot/ask:
  *   post:
- *     summary: Gửi câu hỏi cho chatbot AI
+ *     summary: Gửi câu hỏi tới chatbot AI
  *     description: |
- *       API cho phép người dùng gửi câu hỏi đến chatbot AI.
- *       Chatbot sẽ trả lời với vai trò là gia sư giáo dục trong ứng dụng EduConnect.
- *
- *       Lưu ý:
- *       - Trả lời bằng tiếng Việt
- *       - Không lưu lịch sử chat
- *       - Không yêu cầu đăng nhập (tạm thời)
+ *       Chatbot sử dụng mô hình ngôn ngữ lớn (LLM) từ OpenRouter
+ *       với model AllenAI OLMo 3.1 32B Think.
  *     tags:
  *       - Chatbot
  *     requestBody:
@@ -34,7 +29,7 @@ const chatbotController = require("../controllers/chatbot_controller");
  *             properties:
  *               question:
  *                 type: string
- *                 example: "Sự khác nhau giữa Công nghệ thông tin và Khoa học dữ liệu?"
+ *                 example: "Ngành Công nghệ thông tin cần học gì?"
  *     responses:
  *       200:
  *         description: Chatbot trả lời thành công
@@ -45,32 +40,13 @@ const chatbotController = require("../controllers/chatbot_controller");
  *               properties:
  *                 question:
  *                   type: string
- *                   example: "Nên học CNTT hay Data Science?"
  *                 answer:
  *                   type: string
- *                   example: "CNTT tập trung vào phát triển phần mềm..."
  *       400:
  *         description: Thiếu câu hỏi
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Thiếu câu hỏi"
  *       500:
- *         description: Lỗi hệ thống hoặc AI không phản hồi
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Chatbot không phản hồi"
+ *         description: Lỗi hệ thống
  */
-
 router.post("/ask", chatbotController.askChatbot);
 
 module.exports = router;
