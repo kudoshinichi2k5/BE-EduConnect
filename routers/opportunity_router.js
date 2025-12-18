@@ -131,31 +131,6 @@ router.get('/', opportunityController.getAll);
 
 /**
  * @swagger
- * /opportunity/{id}:
- *   get:
- *     summary: Lấy chi tiết một cơ hội
- *     description: Lấy thông tin chi tiết theo MaTinTuc
- *     tags:
- *       - Opportunity
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           example: "OP001"
- *     responses:
- *       200:
- *         description: Thành công
- *       404:
- *         description: Không tìm thấy
- *       500:
- *         description: Lỗi hệ thống
- */
-router.get('/:id', opportunityController.getById);
-
-/**
- * @swagger
  * /opportunity/type/{type}:
  *   get:
  *     summary: Lọc cơ hội theo loại
@@ -180,6 +155,31 @@ router.get('/:id', opportunityController.getById);
  *         description: Lỗi hệ thống
  */
 router.get('/type/:type', opportunityController.getByType);
+
+/**
+ * @swagger
+ * /opportunity/{id}:
+ *   get:
+ *     summary: Lấy chi tiết một cơ hội
+ *     description: Lấy thông tin chi tiết theo MaTinTuc
+ *     tags:
+ *       - Opportunity
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "OP001"
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       404:
+ *         description: Không tìm thấy
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+router.get('/:id', opportunityController.getById);
 
 /**
  * @swagger
