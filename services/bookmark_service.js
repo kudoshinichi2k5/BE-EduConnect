@@ -3,39 +3,38 @@ const db = require("../config/database");
 class BookmarkService {
 
     // ===== Thêm bookmark =====
-    static async addBookmark(MaNguoiDung, MaTinTuc) {
+    static async addBookmark(MaNguoiDung, TargetId, TargetType) {
         try {
-            // Check USER
             const userExists = await this.existedUser(MaNguoiDung);
             if (!userExists) return { userNotFound: true };
 
-            // Check OPPORTUNITY
-            const oppExists = await this.existedOpportunity(MaTinTuc);
-            if (!oppExists) return { oppNotFound: true };
+            const targetExists = await this.existedTarget(TargetId, TargetType);
+            if (!targetExists) return { targetNotFound: true };
 
             const sql = `
-                INSERT INTO BOOKMARK (MaNguoiDung, MaTinTuc)
-                VALUES (?, ?)
+                INSERT INTO BOOKMARK (MaNguoiDung, TargetId, TargetType)
+                VALUES (?, ?, ?)
             `;
-            await db.query(sql, [MaNguoiDung, MaTinTuc]);
+            await db.query(sql, [MaNguoiDung, TargetId, TargetType]);
+
             return true;
-            
+
         } catch (error) {
-            // Duplicate PK (đã bookmark)
-            if (error.code === 'ER_DUP_ENTRY') {
+            if (error.code === "ER_DUP_ENTRY") {
                 return { exists: true };
             }
             console.error("BookmarkService.addBookmark:", error);
             return null;
         }
     }
-    
+
     // ===== Xóa bookmark =====
-    static async removeBookmark(MaNguoiDung, MaTinTuc) {
+    static async removeBookmark(MaNguoiDung, TargetId, TargetType) {
         try {
             const [result] = await db.query(
-                "DELETE FROM BOOKMARK WHERE MaNguoiDung = ? AND MaTinTuc = ?",
-                [MaNguoiDung, MaTinTuc]
+                `DELETE FROM BOOKMARK 
+                 WHERE MaNguoiDung = ? AND TargetId = ? AND TargetType = ?`,
+                [MaNguoiDung, TargetId, TargetType]
             );
             return result.affectedRows > 0;
         } catch (error) {
@@ -44,12 +43,13 @@ class BookmarkService {
         }
     }
 
-    // ===== Kiểm tra đã bookmark chưa =====
-    static async isBookmarked(MaNguoiDung, MaTinTuc) {
+    // ===== Kiểm tra bookmark =====
+    static async isBookmarked(MaNguoiDung, TargetId, TargetType) {
         try {
             const [rows] = await db.query(
-                "SELECT * FROM BOOKMARK WHERE MaNguoiDung = ? AND MaTinTuc = ?",
-                [MaNguoiDung, MaTinTuc]
+                `SELECT 1 FROM BOOKMARK 
+                 WHERE MaNguoiDung = ? AND TargetId = ? AND TargetType = ?`,
+                [MaNguoiDung, TargetId, TargetType]
             );
             return rows.length > 0;
         } catch (error) {
@@ -58,21 +58,33 @@ class BookmarkService {
         }
     }
 
-    // ===== Lấy danh sách opportunity đã bookmark =====
+    // ===== Lấy bookmark của user (gộp cả opportunity + article) =====
     static async getBookmarksByUser(MaNguoiDung) {
         try {
             const [rows] = await db.query(
                 `
                 SELECT 
-                    o.MaTinTuc,
-                    o.Title,
-                    o.Description,
-                    o.Image_url,
-                    o.Type,
+                    b.TargetType,
+                    b.TargetId,
+                    b.Saved_at,
+
+                    o.Title AS oppTitle,
+                    o.Description AS oppDesc,
+                    o.Image_url AS oppImage,
+                    o.Type AS oppType,
                     o.Deadline,
-                    b.Saved_at
+
+                    a.Title AS articleTitle,
+                    a.Category,
+                    a.Image_url AS articleImage
+
                 FROM BOOKMARK b
-                JOIN OPPORTUNITY o ON b.MaTinTuc = o.MaTinTuc
+                LEFT JOIN OPPORTUNITY o
+                    ON b.TargetType = 'opportunity'
+                   AND b.TargetId = o.MaTinTuc
+                LEFT JOIN ARTICLE a
+                    ON b.TargetType = 'article'
+                   AND b.TargetId = a.MaBaiViet
                 WHERE b.MaNguoiDung = ?
                 ORDER BY b.Saved_at DESC
                 `,
@@ -85,6 +97,7 @@ class BookmarkService {
         }
     }
 
+    // ===== Helpers =====
     static async existedUser(uid) {
         const [rows] = await db.query(
             "SELECT MaNguoiDung FROM USER WHERE MaNguoiDung = ?",
@@ -93,11 +106,18 @@ class BookmarkService {
         return rows.length > 0;
     }
 
-    static async existedOpportunity(MaTinTuc) {
-        const [rows] = await db.query(
-            "SELECT MaTinTuc FROM OPPORTUNITY WHERE MaTinTuc = ?",
-            [MaTinTuc]
-        );
+    static async existedTarget(TargetId, TargetType) {
+        let sql = "";
+
+        if (TargetType === "opportunity") {
+            sql = "SELECT MaTinTuc FROM OPPORTUNITY WHERE MaTinTuc = ?";
+        } else if (TargetType === "article") {
+            sql = "SELECT MaBaiViet FROM ARTICLE WHERE MaBaiViet = ?";
+        } else {
+            return false;
+        }
+
+        const [rows] = await db.query(sql, [TargetId]);
         return rows.length > 0;
     }
 }

@@ -5,14 +5,14 @@ const bookmarkController = require("../controllers/bookmark_controller");
  * @swagger
  * tags:
  *   - name: Bookmark
- *     description: API quản lý bookmark (lưu cơ hội)
+ *     description: API quản lý bookmark (Opportunity, Article, ...)
  */
 
 /**
  * @swagger
  * /bookmark/add:
  *   post:
- *     summary: Thêm bookmark
+ *     summary: Thêm bookmark (Opportunity / Article)
  *     tags:
  *       - Bookmark
  *     requestBody:
@@ -23,19 +23,26 @@ const bookmarkController = require("../controllers/bookmark_controller");
  *             type: object
  *             required:
  *               - MaNguoiDung
- *               - MaTinTuc
+ *               - TargetId
+ *               - TargetType
  *             properties:
  *               MaNguoiDung:
  *                 type: string
  *                 example: "abc123firebase"
- *               MaTinTuc:
+ *               TargetId:
  *                 type: string
  *                 example: "OP001"
+ *               TargetType:
+ *                 type: string
+ *                 enum: [opportunity, article]
+ *                 example: "opportunity"
  *     responses:
  *       201:
  *         description: Bookmark thành công
  *       409:
  *         description: Đã bookmark
+ *       404:
+ *         description: User hoặc Target không tồn tại
  *       400:
  *         description: Thiếu dữ liệu
  *       500:
@@ -47,7 +54,7 @@ router.post("/add", bookmarkController.addBookmark);
  * @swagger
  * /bookmark/remove:
  *   delete:
- *     summary: Bỏ bookmark
+ *     summary: Bỏ bookmark (Opportunity / Article)
  *     tags:
  *       - Bookmark
  *     requestBody:
@@ -58,14 +65,19 @@ router.post("/add", bookmarkController.addBookmark);
  *             type: object
  *             required:
  *               - MaNguoiDung
- *               - MaTinTuc
+ *               - TargetId
+ *               - TargetType
  *             properties:
  *               MaNguoiDung:
  *                 type: string
  *                 example: "abc123firebase"
- *               MaTinTuc:
+ *               TargetId:
  *                 type: string
- *                 example: "OP001"
+ *                 example: "AR001"
+ *               TargetType:
+ *                 type: string
+ *                 enum: [opportunity, article]
+ *                 example: "article"
  *     responses:
  *       200:
  *         description: Bỏ bookmark thành công
@@ -80,9 +92,46 @@ router.delete("/remove", bookmarkController.removeBookmark);
 
 /**
  * @swagger
+ * /bookmark/check:
+ *   get:
+ *     summary: Kiểm tra đã bookmark hay chưa
+ *     tags:
+ *       - Bookmark
+ *     parameters:
+ *       - in: query
+ *         name: MaNguoiDung
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "abc123firebase"
+ *       - in: query
+ *         name: TargetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "OP001"
+ *       - in: query
+ *         name: TargetType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [opportunity, article]
+ *           example: "opportunity"
+ *     responses:
+ *       200:
+ *         description: Trạng thái bookmark
+ *       400:
+ *         description: Thiếu dữ liệu
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+router.get("/check", bookmarkController.checkBookmark);
+
+/**
+ * @swagger
  * /bookmark/user/{uid}:
  *   get:
- *     summary: Lấy danh sách cơ hội đã bookmark
+ *     summary: Lấy danh sách bookmark của user (Opportunity + Article)
  *     tags:
  *       - Bookmark
  *     parameters:
@@ -101,33 +150,5 @@ router.delete("/remove", bookmarkController.removeBookmark);
  *         description: Lỗi hệ thống
  */
 router.get("/user/:uid", bookmarkController.getBookmarksByUser);
-
-/**
- * @swagger
- * /bookmark/check:
- *   get:
- *     summary: Kiểm tra đã bookmark hay chưa
- *     tags:
- *       - Bookmark
- *     parameters:
- *       - in: query
- *         name: MaNguoiDung
- *         required: true
- *         schema:
- *           type: string
- *       - in: query
- *         name: MaTinTuc
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Trạng thái bookmark
- *       400:
- *         description: Thiếu dữ liệu
- *       500:
- *         description: Lỗi hệ thống
- */
-router.get("/check", bookmarkController.checkBookmark);
 
 module.exports = router;
