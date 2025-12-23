@@ -1,4 +1,4 @@
-const { OpenRouter } = require("@openrouter/sdk");
+const { GoogleGenAI } = require("@google/genai");
 require("dotenv").config();
 
 class ChatbotService {
@@ -9,17 +9,15 @@ class ChatbotService {
                 return null;
             }
 
-            const openrouter = new OpenRouter({
-                apiKey: process.env.OPENROUTER_API_KEY
+            const genAI = new GoogleGenAI({
+                apiKey: process.env.GEMINI_API_KEY
             });
 
-            const completion = await openrouter.chat.send({
-                model: "allenai/olmo-3.1-32b-think:free",
-                temperature: 0.4, // giảm lan man
-                messages: [
-                    {
-                        role: "system",
-                        content: `
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash"
+            });
+
+            const prompt = `
 Bạn là Trợ lý AI EduConnect - một gia sư học tập và định hướng nghề nghiệp cho học sinh, sinh viên Việt Nam.
 
 NHIỆM VỤ:
@@ -39,19 +37,33 @@ PHONG CÁCH:
 - Thân thiện, như một người anh/chị gia sư
 - Không dùng từ ngữ quá học thuật
 - Không nói "tôi là AI", hãy nói như trợ lý học tập
-                        `
-                    },
+
+CÂU HỎI:
+${question}
+            `;
+
+            const result = await model.generateContent({
+                contents: [
                     {
                         role: "user",
-                        content: question
+                        parts: [{ text: prompt }]
                     }
-                ]
+                ],
+                generationConfig: {
+                    temperature: 0.4,   // giống OpenRouter của bạn
+                    topP: 0.9,
+                    maxOutputTokens: 800
+                }
             });
 
-            return completion?.choices?.[0]?.message?.content || null;
+            const answer =
+                result?.response?.candidates?.[0]?.content?.parts?.[0]?.text
+                || null;
+
+            return answer;
 
         } catch (error) {
-            console.error("ChatbotService askQuestion Error:", error);
+            console.error("Gemini ChatbotService Error:", error);
             return null;
         }
     }
