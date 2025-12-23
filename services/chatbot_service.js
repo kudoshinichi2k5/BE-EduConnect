@@ -9,14 +9,12 @@ class ChatbotService {
                 return null;
             }
 
-            const genAI = new GoogleGenAI({
+            // 1️⃣ Khởi tạo client
+            const client = new GoogleGenAI({
                 apiKey: process.env.GEMINI_API_KEY
             });
 
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.5-flash"
-            });
-
+            // 2️⃣ Prompt (GIỮ NGUYÊN LOGIC CỦA BẠN)
             const prompt = `
 Bạn là Trợ lý AI EduConnect - một gia sư học tập và định hướng nghề nghiệp cho học sinh, sinh viên Việt Nam.
 
@@ -42,7 +40,9 @@ CÂU HỎI:
 ${question}
             `;
 
-            const result = await model.generateContent({
+            // 3️⃣ Gọi Gemini đúng chuẩn SDK mới
+            const response = await client.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: [
                     {
                         role: "user",
@@ -50,15 +50,15 @@ ${question}
                     }
                 ],
                 generationConfig: {
-                    temperature: 0.4,   // giống OpenRouter của bạn
+                    temperature: 0.4,
                     topP: 0.9,
                     maxOutputTokens: 800
                 }
             });
 
+            // 4️⃣ Lấy text trả lời
             const answer =
-                result?.response?.candidates?.[0]?.content?.parts?.[0]?.text
-                || null;
+                response?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 
             return answer;
 
