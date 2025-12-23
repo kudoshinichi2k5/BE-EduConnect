@@ -44,11 +44,15 @@ CREATE TABLE ARTICLE (
 );
 
 CREATE TABLE BOOKMARK (
-    MaNguoiDung VARCHAR(50) NOT NULL,
-    MaTinTuc VARCHAR(5) NOT NULL,
+    MaNguoiDung VARCHAR(128) NOT NULL,
+    TargetId VARCHAR(10) NOT NULL,
+    TargetType ENUM('opportunity', 'article') NOT NULL,
     Saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (MaNguoiDung, MaTinTuc), 
-    FOREIGN KEY (MaNguoiDung) REFERENCES USER(MaNguoiDung) ON DELETE CASCADE,
-    FOREIGN KEY (MaTinTuc) REFERENCES OPPORTUNITY(MaTinTuc) ON DELETE CASCADE
+
+    PRIMARY KEY (MaNguoiDung, TargetId, TargetType),
+
+    FOREIGN KEY (MaNguoiDung)
+        REFERENCES USER(MaNguoiDung)
+        ON DELETE CASCADE
 );
 
