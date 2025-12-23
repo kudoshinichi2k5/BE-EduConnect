@@ -29,7 +29,7 @@ class BookmarkService {
             return null;
         }
     }
-
+    
     // ===== Xóa bookmark =====
     static async removeBookmark(MaNguoiDung, MaTinTuc) {
         try {
