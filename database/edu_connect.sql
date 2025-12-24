@@ -27,7 +27,7 @@ CREATE TABLE OPPORTUNITY (
     MaTinTuc VARCHAR(5) PRIMARY KEY,
     Title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     Description TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    Content_url TEXT,
+    Content_url TEXT NULL,
     Image_url TEXT,
     Type ENUM('scholarship', 'contest', 'event') NOT NULL,
     Deadline DATETIME,
